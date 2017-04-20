@@ -1,0 +1,225 @@
+<html><head></head><body><div class="apidocDiv">
+<style>
+/*csslint
+*/
+.apidocDiv {
+    background: #fff;
+    font-family: Arial, Helvetica, sans-serif;
+}
+.apidocDiv a[href] {
+    color: #33f;
+    font-weight: bold;
+    text-decoration: none;
+}
+.apidocDiv a[href]:hover {
+    text-decoration: underline;
+}
+.apidocCodeCommentSpan {
+    background: #bbf;
+    color: #000;
+    display: block;
+}
+.apidocCodeKeywordSpan {
+    color: #d00;
+    font-weight: bold;
+}
+.apidocCodePre {
+    background: #eef;
+    border: 1px solid;
+    color: #777;
+    padding: 5px;
+    white-space: pre-wrap;
+}
+.apidocFooterDiv {
+    margin-top: 20px;
+    text-align: center;
+}
+.apidocModuleLi {
+    margin-top: 10px;
+}
+.apidocSectionDiv {
+    border-top: 1px solid;
+    margin-top: 20px;
+}
+.apidocSignatureSpan {
+    color: #777;
+    font-weight: bold;
+}
+</style>
+<h1>api documentation for
+    <a href="https://github.com/IonicaBizau/scrape-it#readme">scrape-it (v3.3.2)</a>
+</h1>
+<h4>A Node.js scraper for humans.</h4>
+<div class="apidocSectionDiv"><a href="#apidoc.tableOfContents" id="apidoc.tableOfContents"><h1>table of contents</h1></a><ol>
+
+    <li class="apidocModuleLi"><a href="#apidoc.module.scrape-it">module scrape-it</a><ol>
+
+        <li>
+
+            <a class="apidocElementLiA" href="#apidoc.element.scrape-it.scrape-it">
+            function <span class="apidocSignatureSpan"></span>scrape-it
+            <span class="apidocSignatureSpan">(url, opts, cb)</span>
+            </a>
+
+        </li>
+
+        <li>
+
+            <a class="apidocElementLiA" href="#apidoc.element.scrape-it.scrapeHTML">
+            function <span class="apidocSignatureSpan">scrape-it.</span>scrapeHTML
+            <span class="apidocSignatureSpan">($, opts)</span>
+            </a>
+
+        </li>
+
+    </ol></li>
+
+</ol></div>
+
+<div class="apidocSectionDiv">
+<h1><a href="#apidoc.module.scrape-it" id="apidoc.module.scrape-it">module scrape-it</a></h1>
+
+
+    <h2>
+        <a href="#apidoc.element.scrape-it.scrape-it" id="apidoc.element.scrape-it.scrape-it">
+        function <span class="apidocSignatureSpan"></span>scrape-it
+        <span class="apidocSignatureSpan">(url, opts, cb)</span>
+        </a>
+    </h2>
+    <ul>
+    <li>description and source-code<pre class="apidocCodePre">function scrapeIt(url, opts, cb) {
+    cb = assured(cb);
+    req(url, function (err, $, res, body) {
+        if (err) {
+            return cb(err);
+        }
+        cb(null, scrapeIt.scrapeHTML($, opts), $, res, body);
+    });
+    return cb._;
+}</pre></li>
+    <li>example usage<pre class="apidocCodePre">n/a</pre></li>
+    </ul>
+
+
+
+    <h2>
+        <a href="#apidoc.element.scrape-it.scrapeHTML" id="apidoc.element.scrape-it.scrapeHTML">
+        function <span class="apidocSignatureSpan">scrape-it.</span>scrapeHTML
+        <span class="apidocSignatureSpan">($, opts)</span>
+        </a>
+    </h2>
+    <ul>
+    <li>description and source-code<pre class="apidocCodePre">scrapeHTML = function ($, opts) {
+
+    if (typeof $ === "string") {
+        $ = cheerio.load($);
+    }
+
+    var normalizeOpt = function normalizeOpt(v) {
+        if (typpy(v, String)) {
+            v = { selector: v };
+        }
+        objDef(v, "data", {});
+        objDef(v, "how", "text", true);
+        if (v.attr) {
+            v.how = function ($elm) {
+                return $elm.attr(v.attr);
+            };
+        }
+        objDef(v, "trimValue", true);
+        objDef(v, "closest", "");
+        return v;
+    },
+        handleDataObj = function handleDataObj(data, $context) {
+        var pageData = {};
+        iterateObj(data, function (cOpt, optName) {
+            cOpt = normalizeOpt(cOpt);
+            cOpt.name = optName;
+
+            var $cContext = $context === $ ? undefined : $context;
+            if (!$cContext &amp;&amp; !cOpt.selector &amp;&amp; !cOpt.listItem) {
+                throw new Err("There is no element selected for the '&lt;option.name&gt;' field. Please provide a selector, list item
+or use nested object structure.", {
+                    option: cOpt,
+                    code: "NO_ELEMENT_SELECTED"
+                });
+            }
+
+            var $elm = cOpt.selector ? $(cOpt.selector, $cContext) : $cContext;
+
+            // Handle lists
+            if (cOpt.listItem) {
+                var docs = pageData[cOpt.name] = [],
+                    $items = $(cOpt.listItem, $cContext),
+                    isEmpty = emptyObj(cOpt.data);
+
+                if (isEmpty) {
+                    cOpt.data.___raw = {};
+                }
+
+                for (var i = 0; i &lt; $items.length; ++i) {
+                    var cDoc = handleDataObj(cOpt.data, $items.eq(i));
+                    docs.push(cDoc.___raw || cDoc);
+                }
+            } else {
+
+                if (typpy(cOpt.eq, Number)) {
+                    $elm = $elm.eq(cOpt.eq);
+                }
+
+                if (!emptyObj(cOpt.data)) {
+                    pageData[cOpt.name] = handleDataObj(cOpt.data, $elm);
+                    return pageData;
+                }
+
+                var value = typpy(cOpt.how, Function) ? cOpt.how($elm) : $elm[cOpt.how]();
+
+                if (cOpt.trimValue &amp;&amp; typpy(value, String)) {
+                    value = value.trim();
+                }
+
+                if (cOpt.convert) {
+                    if (cOpt.closest &amp;&amp; $cContext) {
+                        var $node = $cContext.closest(cOpt.closest);
+                        value = cOpt.convert($node.html(), $node);
+                    } else {
+                        value = cOpt.convert(value, $elm);
+                    }
+                }
+
+                pageData[cOpt.name] = value;
+            }
+        });
+        return pageData;
+    };
+
+    return handleDataObj(opts);
+}</pre></li>
+    <li>example usage<pre class="apidocCodePre">...
+- **String|Object** `url`: The page url or request options.
+- **Object** `opts`: The options passed to `scrapeHTML` method.
+- **Function** `cb`: The callback function.
+
+#### Return
+- **Promise** A promise object.
+
+### `scrapeIt.<span class="apidocCodeKeywordSpan">scrapeHTML</span>($, opts)`
+Scrapes the data in the provided element.
+
+#### Params
+- **Cheerio** `$`: The input element.
+- **Object** `opts`: An object containing the scraping information.
+If you want to scrape a list, you have to use the `listItem` selector:
+...</pre></li>
+    </ul>
+
+
+</div>
+
+<div class="apidocFooterDiv">
+    [ this document was created with
+    <a href="https://github.com/kaizhu256/node-utility2" target="_blank">utility2</a>
+    ]
+</div>
+</div>
+</body></html>
